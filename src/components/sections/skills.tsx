@@ -2,6 +2,7 @@ import { Reveal, RevealItem, StaggerGroup } from "@/components/motion/reveal";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Marquee } from "@/components/ui/marquee";
 import { skillGroups, skillMarquee } from "@/lib/data";
+import { cn } from "@/lib/utils";
 
 export function Skills() {
   return (
@@ -17,7 +18,17 @@ export function Skills() {
 
         <StaggerGroup className="grid gap-px overflow-hidden rounded-lg border border-line bg-line lg:grid-cols-2">
           {skillGroups.map((group, i) => (
-            <RevealItem key={group.title} className="bg-bg">
+            <RevealItem
+              key={group.title}
+              className={cn(
+                "bg-bg",
+                // An odd group count would otherwise leave the second column of
+                // the last row showing as a bare divider block.
+                skillGroups.length % 2 === 1 &&
+                  i === skillGroups.length - 1 &&
+                  "lg:col-span-2",
+              )}
+            >
               <div className="flex h-full flex-col gap-5 p-7 md:p-9">
                 <div className="flex items-baseline justify-between gap-4">
                   <div>

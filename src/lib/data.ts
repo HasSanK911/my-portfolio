@@ -74,13 +74,13 @@ export const projects: Project[] = [
     slug: "jobero",
     title: "Jobero",
     subtitle: "Job management platform for trade & service businesses",
-    category: "Full-stack SaaS",
+    category: "Job management SaaS",
     period: "Jun 2026 — Present",
     order: 202699,
-    role: "Full-stack Developer",
-    stack: ["Full-stack", "Database design", "Responsive UI", "Dashboards"],
+    role: "Front-end Developer",
+    stack: ["Responsive UI", "Dashboards", "Scheduling", "Some back-end"],
     summary:
-      "A full-stack job management web application built for trade and service businesses — electricians, plumbers and HVAC technicians. It carries a job end to end, from the first inquiry through to the final invoice.",
+      "A job management web application built for trade and service businesses — electricians, plumbers and HVAC technicians. It carries a job end to end, from the first inquiry through to the final invoice. The interface is mine end to end; I've handled enough of the back-end and data model to keep it moving, though that side isn't my specialism.",
     highlights: [
       "End-to-end job tracking from initial inquiry through to final invoice.",
       "Staff scheduling and real-time job dashboards for office coordinators.",
@@ -90,7 +90,7 @@ export const projects: Project[] = [
     ],
     facts: [
       { label: "Status", value: "In active development" },
-      { label: "Scope", value: "Full-stack + DB design" },
+      { label: "Scope", value: "Front-end lead" },
       { label: "Audience", value: "Field & office workflows" },
     ],
     featured: true,
@@ -130,10 +130,10 @@ export const projects: Project[] = [
     category: "Marketing site",
     period: "May 2026 — Jun 2026",
     order: 202605,
-    role: "Full-stack Developer",
+    role: "Front-end Developer",
     stack: ["Angular 21", "Bootstrap", "JSON-LD", "jQuery"],
     summary:
-      "A full-stack marketing website for a NICEIC-registered electrical contracting firm, covering a comprehensive service catalogue across domestic, commercial, fire safety and compliance work.",
+      "A marketing website for a NICEIC-registered electrical contracting firm, covering a comprehensive service catalogue across domestic, commercial, fire safety and compliance work.",
     highlights: [
       "Angular 21 with standalone components and lazy-loaded routes on a Bootstrap-based theme.",
       "Complete SEO infrastructure: structured data (JSON-LD), dynamic meta tags, XML sitemap and Open Graph tags.",
@@ -363,12 +363,12 @@ export const projects: Project[] = [
     category: "Commerce platform",
     period: "Dec 2022 — Feb 2025",
     order: 202402,
-    role: "Front-end Developer (+ backend & DevOps)",
-    stack: ["Angular", "Backend", "DevOps", "Cloud"],
+    role: "Front-end Developer",
+    stack: ["Angular", "Responsive UI", "POS workflows", "Cloud platform"],
     summary:
-      "PatronWorks is a web and cloud-based POS solution for a range of businesses and online stores — my longest-running engagement, and the one where I stretched furthest past the front-end.",
+      "PatronWorks is a web and cloud-based POS solution for a range of businesses and online stores — my longest-running engagement, and the one where I occasionally stepped outside the front-end to help.",
     highlights: [
-      "Front-end development as the primary role, with contributions to backend and DevOps.",
+      "Front-end development as the role, with the occasional back-end ticket or deployment picked up when the team needed hands.",
       "Scalable solutions designed to support both in-store and online retail.",
       "Streamlined operational flows built to raise day-to-day efficiency.",
       "Close collaboration across teams to guarantee seamless functionality.",
@@ -376,7 +376,7 @@ export const projects: Project[] = [
     facts: [
       { label: "Category", value: "Cloud POS" },
       { label: "Duration", value: "2+ years" },
-      { label: "Scope", value: "Front-end · backend · DevOps" },
+      { label: "Scope", value: "Front-end, some back-end help" },
     ],
     featured: true,
     gallery: 5,
@@ -423,7 +423,7 @@ export const experience: Experience[] = [
       "Translating dense domain requirements into interfaces operators can move through quickly.",
       "Focused on delivering cutting-edge solutions that make a lasting impact.",
     ],
-    tags: ["Next.js", "Angular", "React", "TypeScript"],
+    tags: ["Next.js", "Angular", "React", "TypeScript", "Laravel"],
   },
   {
     company: "Tech Creator Private Limited",
@@ -431,14 +431,14 @@ export const experience: Experience[] = [
     period: "Dec 2022 — Feb 2025",
     current: false,
     description:
-      "Developed advanced web applications across the MEAN and MERN stacks with an emphasis on design, user experience and performance.",
+      "Built the front-end of advanced web applications on MEAN and MERN stack products, with an emphasis on design, user experience and performance.",
     points: [
-      "Built advanced web applications on the MEAN and MERN stacks.",
+      "Built the front-end of advanced applications on MEAN and MERN stack products.",
       "Collaborated with cross-functional teams to hit project goals efficiently.",
-      "Managed large datasets with MongoDB.",
+      "Kept large MongoDB-backed datasets fast on the client — pagination, virtual scroll and sensible loading states.",
       "Drove technological excellence and innovation across the front-end practice.",
     ],
-    tags: ["Angular", "React", "Node.js", "MongoDB"],
+    tags: ["Angular", "React", "MEAN / MERN", "MongoDB"],
   },
 ];
 
@@ -454,7 +454,7 @@ export const skillGroups: SkillGroup[] = [
   {
     title: "Frameworks",
     caption: "What I build products with",
-    items: ["Angular", "React.js", "Next.js", "Laravel"],
+    items: ["Angular", "React.js", "Next.js"],
   },
   {
     title: "Languages & markup",
@@ -467,9 +467,26 @@ export const skillGroups: SkillGroup[] = [
     items: ["Tailwind CSS", "Bootstrap", "Angular Material", "PrimeNG"],
   },
   {
+    title: "Motion & 3D",
+    caption: "Making interfaces feel alive",
+    items: ["Three.js", "React Three Fiber", "drei", "Framer Motion", "Lenis", "WebGL"],
+  },
+  {
     title: "Tooling & workflow",
     caption: "How the work gets shipped",
     items: ["Git", "GitLab", "Postman", "Swagger", "Jira", "Trello", "Cursor AI"],
+  },
+  {
+    title: "Performance & delivery",
+    caption: "What happens after the build",
+    items: ["Netlify", "ESLint", "SEO & structured data", "Core Web Vitals", "WCAG AA"],
+  },
+  {
+    // Deliberately last and deliberately hedged — the front-end is the
+    // specialism; this row is only what I've picked up around the edges of it.
+    title: "Beyond the front-end",
+    caption: "Touched enough to be useful — not where I specialise",
+    items: ["Laravel & Blade", "PHP", "MongoDB", "Basic DB design", "Deployments"],
   },
 ];
 
@@ -481,6 +498,10 @@ export const skillMarquee = [
   "TypeScript",
   "JavaScript",
   "Tailwind CSS",
+  "Three.js",
+  "React Three Fiber",
+  "Framer Motion",
+  "Lenis",
   "Laravel",
   "PrimeNG",
   "Angular Material",
@@ -494,6 +515,7 @@ export const skillMarquee = [
   "Jira",
   "Trello",
   "Cursor AI",
+  "Netlify",
 ];
 
 /* -------------------------------------------------------------- education */
