@@ -16,16 +16,23 @@ the placeholder rather than showing a broken image.
 Drop a whole folder of screenshots at `public/projects/<slug>/` under any
 numbered filenames — `1.png`, `2.png`, … — and they are picked up in numeric
 order at build time. The folder name is matched ignoring case and punctuation,
-so `londonfra` finds the `london-fra` project just as well. No renaming, and the count in `src/lib/data.ts` no longer
+and a trailing extra word is fine too, so `londonfra` and `awalhrsystem` both
+find their project. No renaming, and the count in `src/lib/data.ts` no longer
 matters for that project. The **first** image becomes the cover (unless a
 `work/<slug>-cover.jpg` exists) and the rest fill the gallery. Each frame
 reserves the screenshot's own aspect ratio, so wide desktop captures are shown
 whole rather than cropped into a 4:3 box.
 
-One filename in that folder is reserved: **`logo.png`** is the project's brand
-lockup, not a screenshot. It's kept out of the gallery and rendered as a chip on
-the project card. Export it with a transparent background and dark artwork — the
-chip is light in both themes.
+Any filename carrying **`logo`** in it — `logo.svg`, `awallogo.jpg` — is treated
+as the project's brand lockup rather than a screenshot. It's kept out of the
+gallery and rendered as a chip on the project card. PNG, JPEG, WebP and SVG all
+work; a logo whose dimensions can't be read is dropped rather than drawn at a
+guessed ratio.
+
+The chip is light by default, since most logos are drawn for white backgrounds,
+and it holds that polarity in both themes — it suits the artwork, not the page.
+For a logo with white or pale lettering, set `logoChip: "dark"` on that project
+in `src/lib/data.ts`, or it will disappear into the chip.
 
 The per-file table below is the alternative for hand-placed art; a project
 folder wins over it when both exist.

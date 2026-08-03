@@ -67,6 +67,12 @@ export type Project = {
   /** Number of placeholder slots rendered in the case-study gallery. */
   gallery: number;
   links?: ProjectLink[];
+  /**
+   * Chip the card lockup sits on. Defaults to light, which suits logos drawn
+   * for white backgrounds; set `"dark"` when the artwork is white or pale and
+   * would otherwise disappear.
+   */
+  logoChip?: "light" | "dark";
 };
 
 export const projects: Project[] = [
@@ -178,6 +184,7 @@ export const projects: Project[] = [
     ],
     featured: true,
     gallery: 6,
+    links: [{ label: "Visit site", href: "https://hr.odt.ly" }],
   },
   {
     slug: "kyrobit",
@@ -203,6 +210,9 @@ export const projects: Project[] = [
     ],
     featured: false,
     gallery: 3,
+    links: [{ label: "Visit site", href: "https://kyrobit.co.uk" }],
+    // Wordmark is near-white — it disappears on the default light chip.
+    logoChip: "dark",
   },
   {
     slug: "zaratelier",

@@ -54,9 +54,11 @@ export type ProjectShot = { src: string; ratio: string };
 /** A brand lockup, sized so `next/image` can reserve its exact footprint. */
 export type ProjectLogo = { src: string; width: number; height: number };
 
-const IMAGE_FILE = /\.(avif|webp|jpe?g|png)$/i;
-/** Reserved basenames inside a project folder — never gallery screens. */
-const LOGO_FILE = /^logo\.(avif|webp|jpe?g|png)$/i;
+/** Gallery screens are raster only; a lockup may also be vector. */
+const SHOT_FILE = /\.(avif|webp|jpe?g|png)$/i;
+const LOGO_FILE = /\.(avif|webp|jpe?g|png|svg)$/i;
+/** Any filename carrying "logo" is the lockup, never a gallery screen. */
+const isLogoName = (name: string) => /logo/i.test(path.parse(name).name);
 const SAFE_SLUG = /^[a-z0-9-]+$/;
 /** Used when the intrinsic size can't be read (AVIF headers aren't parsed). */
 const FALLBACK_RATIO = "16 / 9";
@@ -126,6 +128,41 @@ function imageSize(absPath: string): { width: number; height: number } | undefin
   return undefined;
 }
 
+/**
+ * Declared size of an SVG, from its `width`/`height` or failing that its
+ * `viewBox`. Only the ratio matters downstream, so either is fine.
+ */
+function svgSize(absPath: string): { width: number; height: number } | undefined {
+  let tag: string | undefined;
+  try {
+    tag = fs.readFileSync(absPath, "utf8").slice(0, 4096).match(/<svg\b[^>]*>/i)?.[0];
+  } catch {
+    return undefined;
+  }
+  if (!tag) return undefined;
+
+  // Reject `100%` and friends by requiring the quote (or `px`) right after.
+  const attr = (name: string) =>
+    positive(tag.match(new RegExp(`\\b${name}="([\\d.]+)(px)?"`, "i"))?.[1]);
+
+  const width = attr("width");
+  const height = attr("height");
+  if (width && height) return { width, height };
+
+  const box = tag.match(/\bviewBox="([^"]*)"/i)?.[1]?.trim().split(/[\s,]+/);
+  if (box?.length === 4) {
+    const boxWidth = positive(box[2]);
+    const boxHeight = positive(box[3]);
+    if (boxWidth && boxHeight) return { width: boxWidth, height: boxHeight };
+  }
+  return undefined;
+}
+
+function positive(value?: string): number | undefined {
+  const n = value ? Number.parseFloat(value) : Number.NaN;
+  return Number.isFinite(n) && n > 0 ? Math.round(n) : undefined;
+}
+
 /** Pairs a resolved public path with the aspect ratio its frame should reserve. */
 function toShot(publicPath: string, fallbackRatio = FALLBACK_RATIO): ProjectShot {
   const size = imageSize(path.resolve(PUBLIC_DIR, "." + publicPath));
@@ -139,9 +176,11 @@ function toShot(publicPath: string, fallbackRatio = FALLBACK_RATIO): ProjectShot
 const loose = (name: string) => name.toLowerCase().replace(/[^a-z0-9]/g, "");
 
 /**
- * Actual folder name for a slug. An exact match wins; failing that the match is
- * punctuation-insensitive, so a folder dropped in as `londonfra` still lands on
- * the `london-fra` project instead of silently rendering placeholders.
+ * Actual folder name for a slug. An exact match wins, then a
+ * punctuation-insensitive one, then a folder that merely starts with the slug —
+ * so `londonfra` and `awalhrsystem` both land on their project instead of
+ * silently rendering placeholders. Slugs are distinct enough that the prefix
+ * pass can't reach a different project.
  */
 function findProjectDir(slug: string): string | undefined {
   let dirs: string[];
@@ -156,7 +195,10 @@ function findProjectDir(slug: string): string | undefined {
 
   if (dirs.includes(slug)) return slug;
   const target = loose(slug);
-  return dirs.find((dir) => loose(dir) === target);
+  return (
+    dirs.find((dir) => loose(dir) === target) ??
+    dirs.find((dir) => loose(dir).startsWith(target))
+  );
 }
 
 /**
@@ -176,21 +218,27 @@ function readProjectFolder(slug: string): { logo?: ProjectLogo; shots: ProjectSh
   try {
     names = fs
       .readdirSync(dir, { withFileTypes: true })
-      .filter((entry) => entry.isFile() && IMAGE_FILE.test(entry.name))
-      .map((entry) => entry.name);
+      .filter((entry) => entry.isFile())
+      .map((entry) => entry.name)
+      .filter((name) => (isLogoName(name) ? LOGO_FILE.test(name) : SHOT_FILE.test(name)));
   } catch {
     return { shots: [] };
   }
 
   const shots = names
-    .filter((name) => !LOGO_FILE.test(name))
+    .filter((name) => !isLogoName(name))
     .sort(numericOrder)
     .map((name) => toShot(`/projects/${dirName}/${name}`));
 
-  const logoName = names.find((name) => LOGO_FILE.test(name));
+  // A plain `logo.*` wins over `awallogo.jpg` and the like.
+  const logoName = names.find((name) => /^logo\./i.test(name)) ?? names.find(isLogoName);
   // A logo whose size can't be read (AVIF headers aren't parsed) is dropped —
   // drawn at the wrong ratio it would look worse than none at all.
-  const size = logoName ? imageSize(path.join(dir, logoName)) : undefined;
+  const size = logoName
+    ? logoName.toLowerCase().endsWith(".svg")
+      ? svgSize(path.join(dir, logoName))
+      : imageSize(path.join(dir, logoName))
+    : undefined;
   const logo = logoName && size ? { src: `/projects/${dirName}/${logoName}`, ...size } : undefined;
 
   return { logo, shots };

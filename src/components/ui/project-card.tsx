@@ -58,10 +58,17 @@ export function ProjectCard({
             </span>
           </div>
 
-          {/* Brand lockup. Sits on a light chip because most logos are drawn
-              for white — that also keeps it legible in the dark theme. */}
+          {/* Brand lockup. The chip holds its polarity across both themes —
+              it exists to suit the artwork, not the page around it. */}
           {logo ? (
-            <span className="pointer-events-none absolute bottom-4 left-4 inline-flex items-center rounded-lg bg-white/95 px-3 py-2 shadow-sm ring-1 ring-black/10 backdrop-blur-sm">
+            <span
+              className={cn(
+                "pointer-events-none absolute bottom-4 left-4 inline-flex items-center rounded-lg px-3 py-2 shadow-sm ring-1 backdrop-blur-sm",
+                project.logoChip === "dark"
+                  ? "bg-[#0e0e12]/95 ring-white/15"
+                  : "bg-white/95 ring-black/10",
+              )}
+            >
               <Image
                 src={logo.src}
                 alt={`${project.title} logo`}
