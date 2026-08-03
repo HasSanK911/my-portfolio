@@ -4,7 +4,7 @@ import { Reveal } from "@/components/motion/reveal";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { ProjectCard } from "@/components/ui/project-card";
 import { featuredProjects, projects } from "@/lib/data";
-import { projectCover } from "@/lib/assets";
+import { projectCover, projectLogo } from "@/lib/assets";
 
 export function Work() {
   return (
@@ -45,6 +45,7 @@ export function Work() {
                 index={i}
                 priority={i < 2}
                 coverSrc={projectCover(project.slug)?.src}
+                logo={projectLogo(project.slug)}
               />
             </Reveal>
           ))}

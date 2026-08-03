@@ -21,6 +21,11 @@ matters for that project. The **first** image becomes the cover (unless a
 reserves the screenshot's own aspect ratio, so wide desktop captures are shown
 whole rather than cropped into a 4:3 box.
 
+One filename in that folder is reserved: **`logo.png`** is the project's brand
+lockup, not a screenshot. It's kept out of the gallery and rendered as a chip on
+the project card. Export it with a transparent background and dark artwork — the
+chip is light in both themes.
+
 The per-file table below is the alternative for hand-placed art; a project
 folder wins over it when both exist.
 

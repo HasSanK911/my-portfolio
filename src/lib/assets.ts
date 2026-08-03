@@ -50,7 +50,12 @@ export function publicAsset(publicPath: string): string | undefined {
 /** A real screenshot plus the aspect ratio to reserve for it. */
 export type ProjectShot = { src: string; ratio: string };
 
+/** A brand lockup, sized so `next/image` can reserve its exact footprint. */
+export type ProjectLogo = { src: string; width: number; height: number };
+
 const IMAGE_FILE = /\.(avif|webp|jpe?g|png)$/i;
+/** Reserved basenames inside a project folder — never gallery screens. */
+const LOGO_FILE = /^logo\.(avif|webp|jpe?g|png)$/i;
 const SAFE_SLUG = /^[a-z0-9-]+$/;
 /** Used when the intrinsic size can't be read (AVIF/WebP headers aren't parsed). */
 const FALLBACK_RATIO = "16 / 9";
@@ -111,7 +116,9 @@ function projectShots(slug: string): ProjectShot[] {
   try {
     names = fs
       .readdirSync(dir, { withFileTypes: true })
-      .filter((entry) => entry.isFile() && IMAGE_FILE.test(entry.name))
+      .filter(
+        (entry) => entry.isFile() && IMAGE_FILE.test(entry.name) && !LOGO_FILE.test(entry.name),
+      )
       .map((entry) => entry.name)
       .sort(numericOrder);
   } catch {
@@ -128,6 +135,22 @@ function toShot(publicPath: string, fallbackRatio = FALLBACK_RATIO): ProjectShot
     src: publicPath,
     ratio: size ? `${size.width} / ${size.height}` : fallbackRatio,
   };
+}
+
+/**
+ * Brand lockup for a project — `public/projects/<slug>/logo.png`. Comes back
+ * `undefined` for a project that hasn't got one, or when the intrinsic size
+ * can't be read (only PNG and JPEG headers are parsed), since a logo drawn at
+ * the wrong ratio looks worse than no logo at all.
+ */
+export function projectLogo(slug: string): ProjectLogo | undefined {
+  if (!SAFE_SLUG.test(slug)) return undefined;
+
+  const src = publicAsset(`/projects/${slug}/logo.png`);
+  if (!src) return undefined;
+
+  const size = imageSize(path.resolve(PUBLIC_DIR, "." + src));
+  return size ? { src, ...size } : undefined;
 }
 
 /**

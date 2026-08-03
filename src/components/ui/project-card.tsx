@@ -1,9 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { TiltCard } from "@/components/motion/tilt-card";
 import { PlaceholderImage } from "@/components/ui/placeholder-image";
+import type { ProjectLogo } from "@/lib/assets";
 import type { Project } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
@@ -14,9 +16,18 @@ type ProjectCardProps = {
   priority?: boolean;
   /** Resolved by the server parent via `projectCover()`; undefined = placeholder. */
   coverSrc?: string;
+  /** Resolved by the server parent via `projectLogo()`; undefined = no lockup. */
+  logo?: ProjectLogo;
 };
 
-export function ProjectCard({ project, index, className, priority, coverSrc }: ProjectCardProps) {
+export function ProjectCard({
+  project,
+  index,
+  className,
+  priority,
+  coverSrc,
+  logo,
+}: ProjectCardProps) {
   return (
     <TiltCard max={5} className={cn("h-full rounded-xl", className)}>
       <Link
@@ -46,6 +57,21 @@ export function ProjectCard({ project, index, className, priority, coverSrc }: P
               {project.category}
             </span>
           </div>
+
+          {/* Brand lockup. Sits on a light chip because most logos are drawn
+              for white — that also keeps it legible in the dark theme. */}
+          {logo ? (
+            <span className="pointer-events-none absolute bottom-4 left-4 inline-flex items-center rounded-lg bg-white/95 px-3 py-2 shadow-sm ring-1 ring-black/10 backdrop-blur-sm">
+              <Image
+                src={logo.src}
+                alt={`${project.title} logo`}
+                width={logo.width}
+                height={logo.height}
+                sizes="120px"
+                className="h-5 w-auto"
+              />
+            </span>
+          ) : null}
 
           {/* Hover affordance — supplementary only; the whole card is a link */}
           <span

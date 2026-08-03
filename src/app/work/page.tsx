@@ -3,7 +3,7 @@ import { Reveal } from "@/components/motion/reveal";
 import { TextReveal } from "@/components/motion/text-reveal";
 import { ProjectCard } from "@/components/ui/project-card";
 import { projects } from "@/lib/data";
-import { projectCover } from "@/lib/assets";
+import { projectCover, projectLogo } from "@/lib/assets";
 
 export const metadata: Metadata = {
   title: "Work",
@@ -54,6 +54,7 @@ export default function WorkIndexPage() {
                 index={i}
                 priority={i < 2}
                 coverSrc={projectCover(project.slug)?.src}
+                logo={projectLogo(project.slug)}
               />
             </Reveal>
           ))}
