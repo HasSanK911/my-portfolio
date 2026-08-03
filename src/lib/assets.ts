@@ -45,14 +45,115 @@ export function publicAsset(publicPath: string): string | undefined {
   return undefined;
 }
 
-/** Cover shot for a project card / case-study header. */
-export function projectCover(slug: string) {
-  return publicAsset(`/images/work/${slug}-cover.jpg`);
+/* ------------------------------------------------ drop-in project folders */
+
+/** A real screenshot plus the aspect ratio to reserve for it. */
+export type ProjectShot = { src: string; ratio: string };
+
+const IMAGE_FILE = /\.(avif|webp|jpe?g|png)$/i;
+const SAFE_SLUG = /^[a-z0-9-]+$/;
+/** Used when the intrinsic size can't be read (AVIF/WebP headers aren't parsed). */
+const FALLBACK_RATIO = "16 / 9";
+
+/** `2.png` before `10.png` — plain lexical sort gets this wrong. */
+const numericOrder = new Intl.Collator("en", { numeric: true }).compare;
+
+/**
+ * Intrinsic size of a PNG or JPEG, read straight from the header. Lets a
+ * gallery reserve each screenshot's true ratio instead of cropping it into a
+ * fixed frame.
+ */
+function imageSize(absPath: string): { width: number; height: number } | undefined {
+  let fd: number | undefined;
+  try {
+    fd = fs.openSync(absPath, "r");
+    const buf = Buffer.alloc(65536);
+    const read = fs.readSync(fd, buf, 0, buf.length, 0);
+
+    // PNG — IHDR sits at a fixed offset right after the 8-byte signature.
+    if (read > 24 && buf.readUInt32BE(0) === 0x89504e47 && buf.readUInt32BE(4) === 0x0d0a1a0a) {
+      return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
+    }
+
+    // JPEG — walk the marker segments until a start-of-frame carries the size.
+    if (read > 4 && buf[0] === 0xff && buf[1] === 0xd8) {
+      for (let i = 2; i + 9 < read; ) {
+        if (buf[i] !== 0xff) {
+          i++;
+          continue;
+        }
+        const marker = buf[i + 1];
+        const isFrame =
+          marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc;
+        if (isFrame) return { height: buf.readUInt16BE(i + 5), width: buf.readUInt16BE(i + 7) };
+        i += 2 + buf.readUInt16BE(i + 2);
+      }
+    }
+  } catch {
+    // Unreadable or a format we don't parse — caller falls back to a set ratio.
+  } finally {
+    if (fd !== undefined) fs.closeSync(fd);
+  }
+  return undefined;
 }
 
-/** Ordered gallery screens for a case study, `undefined` where not yet added. */
-export function projectGallery(slug: string, count: number) {
-  return Array.from({ length: count }, (_, i) =>
-    publicAsset(`/images/work/${slug}-${String(i + 1).padStart(2, "0")}.jpg`),
-  );
+/**
+ * Screens dropped into `public/projects/<slug>/` under any numbered filename
+ * (`1.png`, `2.png`, …). Whatever is in the folder is picked up in numeric
+ * order at build time — no renaming to the `work/<slug>-01.jpg` convention and
+ * no gallery count to keep in sync.
+ */
+function projectShots(slug: string): ProjectShot[] {
+  if (!SAFE_SLUG.test(slug)) return [];
+
+  const dir = path.join(PUBLIC_DIR, "projects", slug);
+  let names: string[];
+  try {
+    names = fs
+      .readdirSync(dir, { withFileTypes: true })
+      .filter((entry) => entry.isFile() && IMAGE_FILE.test(entry.name))
+      .map((entry) => entry.name)
+      .sort(numericOrder);
+  } catch {
+    return [];
+  }
+
+  return names.map((name) => toShot(`/projects/${slug}/${name}`));
+}
+
+/** Pairs a resolved public path with the aspect ratio its frame should reserve. */
+function toShot(publicPath: string, fallbackRatio = FALLBACK_RATIO): ProjectShot {
+  const size = imageSize(path.resolve(PUBLIC_DIR, "." + publicPath));
+  return {
+    src: publicPath,
+    ratio: size ? `${size.width} / ${size.height}` : fallbackRatio,
+  };
+}
+
+/**
+ * Cover shot for a project card / case-study header. Cards crop it to their own
+ * ratio; the case study can honour `ratio` to show it uncropped.
+ */
+export function projectCover(slug: string): ProjectShot | undefined {
+  const file = publicAsset(`/images/work/${slug}-cover.jpg`);
+  return file ? toShot(file, "16 / 9") : projectShots(slug)[0];
+}
+
+/**
+ * Ordered gallery screens for a case study. Real shots from a project folder
+ * win; otherwise the `-01.jpg` convention is tried and each missing slot comes
+ * back `undefined` so the caller renders a placeholder.
+ */
+export function projectGallery(slug: string, count: number): (ProjectShot | undefined)[] {
+  const shots = projectShots(slug);
+  if (shots.length) {
+    // Without a dedicated cover file the first shot already heads the page —
+    // don't show it twice.
+    return publicAsset(`/images/work/${slug}-cover.jpg`) ? shots : shots.slice(1);
+  }
+
+  return Array.from({ length: count }, (_, i) => {
+    const src = publicAsset(`/images/work/${slug}-${String(i + 1).padStart(2, "0")}.jpg`);
+    return src ? toShot(src, i === 0 ? "16 / 9" : "4 / 3") : undefined;
+  });
 }

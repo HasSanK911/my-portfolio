@@ -11,6 +11,19 @@ gallery shots resolve by convention from the project slug, so no code change is
 needed. If a path is wrong or the file is missing, the component falls back to
 the placeholder rather than showing a broken image.
 
+### Quickest route for project screenshots
+
+Drop a whole folder of screenshots at `public/projects/<slug>/` under any
+numbered filenames — `1.png`, `2.png`, … — and they are picked up in numeric
+order at build time. No renaming, and the count in `src/lib/data.ts` no longer
+matters for that project. The **first** image becomes the cover (unless a
+`work/<slug>-cover.jpg` exists) and the rest fill the gallery. Each frame
+reserves the screenshot's own aspect ratio, so wide desktop captures are shown
+whole rather than cropped into a 4:3 box.
+
+The per-file table below is the alternative for hand-placed art; a project
+folder wins over it when both exist.
+
 ## Format guidance
 
 - Prefer **WebP** or **AVIF** over JPEG — roughly 30% smaller at equal quality.

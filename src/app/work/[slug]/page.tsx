@@ -135,11 +135,11 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
         <Reveal direction="up">
           <div className="overflow-hidden rounded-xl border border-line">
             <PlaceholderImage
-              src={cover}
+              src={cover?.src}
               alt={`${project.title} cover`}
               label={`${project.title} — cover`}
               hint={`/images/work/${project.slug}-cover.jpg`}
-              ratio="16 / 9"
+              ratio={cover?.ratio ?? "16 / 9"}
               rounded="none"
               priority
               sizes="100vw"
@@ -229,24 +229,24 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
           <h2 className="text-label text-accent">Gallery</h2>
         </Reveal>
 
-        <div className="grid gap-5 md:grid-cols-2">
-          {Array.from({ length: project.gallery }).map((_, i) => {
+        <div className="grid items-start gap-5 md:grid-cols-2">
+          {gallery.map((shot, i) => {
             // First tile spans full width — a lead shot for the case study.
             const wide = i === 0;
             return (
               <Reveal
-                key={i}
+                key={shot?.src ?? i}
                 direction="up"
                 delay={(i % 2) * 0.06}
                 className={wide ? "md:col-span-2" : undefined}
               >
                 <div className="overflow-hidden rounded-lg border border-line">
                   <PlaceholderImage
-                    src={gallery[i]}
+                    src={shot?.src}
                     alt={`${project.title} screen ${i + 1}`}
                     label={`Screen ${String(i + 1).padStart(2, "0")}`}
                     hint={`/images/work/${project.slug}-${String(i + 1).padStart(2, "0")}.jpg`}
-                    ratio={wide ? "16 / 9" : "4 / 3"}
+                    ratio={shot?.ratio ?? (wide ? "16 / 9" : "4 / 3")}
                     rounded="none"
                     sizes={wide ? "100vw" : "(max-width: 768px) 100vw, 50vw"}
                   />

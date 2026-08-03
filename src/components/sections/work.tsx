@@ -44,7 +44,7 @@ export function Work() {
                 project={project}
                 index={i}
                 priority={i < 2}
-                coverSrc={projectCover(project.slug)}
+                coverSrc={projectCover(project.slug)?.src}
               />
             </Reveal>
           ))}
