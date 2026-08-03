@@ -16,6 +16,52 @@ deploying — it drives canonical URLs, `sitemap.xml`, Open Graph and JSON-LD.
 
 ---
 
+## Visitor analytics
+
+A self-contained analytics layer with no third-party script and no external
+service: a view counter in the hero, and a private dashboard at **`/views`**.
+
+**Setup.** Set `VIEWS_PASSWORD` in the Netlify environment. That is the only
+required variable — until it is set, `/views` refuses everyone rather than
+falling open. `VIEWS_SECRET` and `ANALYTICS_SALT` are optional and documented in
+`.env.example`.
+
+Storage is **Netlify Blobs**, which needs no configuration on a Netlify deploy.
+`next dev` has no blob environment, so it falls back to an in-memory store; the
+dashboard says so on screen rather than presenting throwaway numbers as real.
+
+| Piece | File |
+|---|---|
+| Hero chip (all-time views) | `src/components/ui/views-chip.tsx` |
+| Client tracker + view count context | `src/components/analytics/analytics-provider.tsx` |
+| Ingest / totals / dashboard feed | `src/app/api/views/**` |
+| Dashboard + password gate | `src/app/views/**` |
+| Storage, sessions, auth, formatting | `src/lib/analytics/**` |
+
+**What it records.** Per visitor: approximate city and country (from the edge's
+geo header), device, browser, OS, referrer, every path read, engaged time per
+path, and each session. Bots are dropped on arrival, and logging into `/views`
+sets a cookie that excludes your own visits — toggleable from the dashboard.
+
+**What it does not record.** No name, no email, no cross-site identity. The IP
+is turned into a salted, truncated one-way hash on arrival and the address
+itself is never written down. Location resolution stops at city because that is
+all the edge exposes.
+
+**Engaged time, not wall-clock time.** The clock only runs while the tab is
+visible *and* the visitor has interacted in the last 60s, so a page left open in
+a background tab does not report as hours of reading. Time is flushed on a 15s
+heartbeat and once more via `sendBeacon` on unload.
+
+Counters are updated with an ETag compare-and-swap loop, so two people landing
+in the same millisecond cannot clobber each other's increment.
+
+> The tracker sets a first-party cookie to recognise a returning visitor. If you
+> need to serve the EU under a strict reading of the ePrivacy directive, add a
+> consent notice — nothing here asks for consent on your behalf.
+
+---
+
 ## Where to edit things
 
 | I want to change… | Edit |
@@ -26,6 +72,7 @@ deploying — it drives canonical URLs, `sitemap.xml`, Open Graph and JSON-LD.
 | Typefaces | `src/app/layout.tsx` |
 | Section order on the home page | `src/app/page.tsx` |
 | The 3D scene | `src/components/three/scene.tsx` |
+| Analytics tuning (session gap, live window) | `src/lib/analytics/limits.ts` |
 
 **`src/lib/data.ts` is the single source of truth for content.** Adding a
 project there automatically creates its case-study page, its sitemap entry, its
@@ -123,7 +170,7 @@ type, viewport width and the Save-Data hint.
 
 Next.js 16 (App Router, Turbopack) · React 19 · TypeScript · Tailwind CSS v4 ·
 Three.js + React Three Fiber + drei · Framer Motion · Lenis · next-themes ·
-lucide-react
+lucide-react · Netlify Blobs
 
 Design decisions were informed by the
 [UI/UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) design

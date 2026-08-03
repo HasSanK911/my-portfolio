@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Instrument_Serif, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
+import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { SmoothScroll } from "@/components/layout/smooth-scroll";
 import { Preloader } from "@/components/layout/preloader";
@@ -109,16 +110,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             Skip to content
           </a>
 
-          <Preloader />
-          <SmoothScroll />
-          <Cursor />
-          <Nav />
+          {/* Wraps the tree so the view counter is available to any section,
+              and so route changes are measured wherever they happen. */}
+          <AnalyticsProvider>
+            <Preloader />
+            <SmoothScroll />
+            <Cursor />
+            <Nav />
 
-          <main id="main" className="relative z-10">
-            {children}
-          </main>
+            <main id="main" className="relative z-10">
+              {children}
+            </main>
 
-          <Footer />
+            <Footer />
+          </AnalyticsProvider>
         </ThemeProvider>
 
         <script

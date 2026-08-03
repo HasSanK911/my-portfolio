@@ -5,6 +5,7 @@ import { useReducedMotionSafe } from "@/hooks/use-browser-state";
 import { ArrowDown, ArrowUpRight, MapPin } from "lucide-react";
 import { useRef } from "react";
 import { Magnetic } from "@/components/motion/magnetic";
+import { ViewsChip } from "@/components/ui/views-chip";
 import { EASE_EXPO } from "@/lib/motion";
 import { profile, stats } from "@/lib/data";
 
@@ -53,6 +54,9 @@ export function Hero() {
                 <MapPin className="h-3 w-3" aria-hidden />
                 {profile.location}
               </span>
+              {/* Renders nothing until the count arrives, so the row never
+                  reflows around an empty placeholder. */}
+              <ViewsChip />
             </motion.div>
 
             {/* Name */}
