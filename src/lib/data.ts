@@ -122,6 +122,7 @@ export const projects: Project[] = [
     ],
     featured: true,
     gallery: 5,
+    links: [{ label: "Visit site", href: "https://londonfra.co.uk" }],
   },
   {
     slug: "tesla-electrics",
@@ -148,6 +149,7 @@ export const projects: Project[] = [
     ],
     featured: true,
     gallery: 4,
+    links: [{ label: "Visit site", href: "https://teslaelectrics.co.uk" }],
   },
   {
     slug: "awal-hr",
