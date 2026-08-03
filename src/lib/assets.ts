@@ -14,6 +14,7 @@ import path from "node:path";
  */
 
 const PUBLIC_DIR = path.join(process.cwd(), "public");
+const PROJECTS_DIR = path.join(PUBLIC_DIR, "projects");
 
 /** Extensions tried in order — modern formats win when both are present. */
 const EXTENSIONS = [".avif", ".webp", ".jpg", ".jpeg", ".png"];
@@ -102,32 +103,6 @@ function imageSize(absPath: string): { width: number; height: number } | undefin
   return undefined;
 }
 
-/**
- * Screens dropped into `public/projects/<slug>/` under any numbered filename
- * (`1.png`, `2.png`, …). Whatever is in the folder is picked up in numeric
- * order at build time — no renaming to the `work/<slug>-01.jpg` convention and
- * no gallery count to keep in sync.
- */
-function projectShots(slug: string): ProjectShot[] {
-  if (!SAFE_SLUG.test(slug)) return [];
-
-  const dir = path.join(PUBLIC_DIR, "projects", slug);
-  let names: string[];
-  try {
-    names = fs
-      .readdirSync(dir, { withFileTypes: true })
-      .filter(
-        (entry) => entry.isFile() && IMAGE_FILE.test(entry.name) && !LOGO_FILE.test(entry.name),
-      )
-      .map((entry) => entry.name)
-      .sort(numericOrder);
-  } catch {
-    return [];
-  }
-
-  return names.map((name) => toShot(`/projects/${slug}/${name}`));
-}
-
 /** Pairs a resolved public path with the aspect ratio its frame should reserve. */
 function toShot(publicPath: string, fallbackRatio = FALLBACK_RATIO): ProjectShot {
   const size = imageSize(path.resolve(PUBLIC_DIR, "." + publicPath));
@@ -137,20 +112,70 @@ function toShot(publicPath: string, fallbackRatio = FALLBACK_RATIO): ProjectShot
   };
 }
 
+/** Punctuation-insensitive form used to match a folder to a slug. */
+const loose = (name: string) => name.toLowerCase().replace(/[^a-z0-9]/g, "");
+
 /**
- * Brand lockup for a project — `public/projects/<slug>/logo.png`. Comes back
- * `undefined` for a project that hasn't got one, or when the intrinsic size
- * can't be read (only PNG and JPEG headers are parsed), since a logo drawn at
- * the wrong ratio looks worse than no logo at all.
+ * Actual folder name for a slug. An exact match wins; failing that the match is
+ * punctuation-insensitive, so a folder dropped in as `londonfra` still lands on
+ * the `london-fra` project instead of silently rendering placeholders.
  */
+function findProjectDir(slug: string): string | undefined {
+  let dirs: string[];
+  try {
+    dirs = fs
+      .readdirSync(PROJECTS_DIR, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name);
+  } catch {
+    return undefined;
+  }
+
+  if (dirs.includes(slug)) return slug;
+  const target = loose(slug);
+  return dirs.find((dir) => loose(dir) === target);
+}
+
+/**
+ * Contents of a drop-in folder at `public/projects/<slug>/`: screens under any
+ * numbered filename (`1.png`, `2.png`, …) picked up in numeric order at build
+ * time, plus the reserved `logo.*` lockup. No renaming to the
+ * `work/<slug>-01.jpg` convention, and no gallery count to keep in sync.
+ */
+function readProjectFolder(slug: string): { logo?: ProjectLogo; shots: ProjectShot[] } {
+  if (!SAFE_SLUG.test(slug)) return { shots: [] };
+
+  const dirName = findProjectDir(slug);
+  if (!dirName) return { shots: [] };
+
+  const dir = path.join(PROJECTS_DIR, dirName);
+  let names: string[];
+  try {
+    names = fs
+      .readdirSync(dir, { withFileTypes: true })
+      .filter((entry) => entry.isFile() && IMAGE_FILE.test(entry.name))
+      .map((entry) => entry.name);
+  } catch {
+    return { shots: [] };
+  }
+
+  const shots = names
+    .filter((name) => !LOGO_FILE.test(name))
+    .sort(numericOrder)
+    .map((name) => toShot(`/projects/${dirName}/${name}`));
+
+  const logoName = names.find((name) => LOGO_FILE.test(name));
+  // A logo whose size can't be read (only PNG and JPEG headers are parsed) is
+  // dropped — drawn at the wrong ratio it would look worse than none at all.
+  const size = logoName ? imageSize(path.join(dir, logoName)) : undefined;
+  const logo = logoName && size ? { src: `/projects/${dirName}/${logoName}`, ...size } : undefined;
+
+  return { logo, shots };
+}
+
+/** Brand lockup for a project — `public/projects/<slug>/logo.png`. */
 export function projectLogo(slug: string): ProjectLogo | undefined {
-  if (!SAFE_SLUG.test(slug)) return undefined;
-
-  const src = publicAsset(`/projects/${slug}/logo.png`);
-  if (!src) return undefined;
-
-  const size = imageSize(path.resolve(PUBLIC_DIR, "." + src));
-  return size ? { src, ...size } : undefined;
+  return readProjectFolder(slug).logo;
 }
 
 /**
@@ -159,7 +184,7 @@ export function projectLogo(slug: string): ProjectLogo | undefined {
  */
 export function projectCover(slug: string): ProjectShot | undefined {
   const file = publicAsset(`/images/work/${slug}-cover.jpg`);
-  return file ? toShot(file, "16 / 9") : projectShots(slug)[0];
+  return file ? toShot(file, "16 / 9") : readProjectFolder(slug).shots[0];
 }
 
 /**
@@ -168,7 +193,7 @@ export function projectCover(slug: string): ProjectShot | undefined {
  * back `undefined` so the caller renders a placeholder.
  */
 export function projectGallery(slug: string, count: number): (ProjectShot | undefined)[] {
-  const shots = projectShots(slug);
+  const { shots } = readProjectFolder(slug);
   if (shots.length) {
     // Without a dedicated cover file the first shot already heads the page —
     // don't show it twice.

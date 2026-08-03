@@ -15,7 +15,8 @@ the placeholder rather than showing a broken image.
 
 Drop a whole folder of screenshots at `public/projects/<slug>/` under any
 numbered filenames — `1.png`, `2.png`, … — and they are picked up in numeric
-order at build time. No renaming, and the count in `src/lib/data.ts` no longer
+order at build time. The folder name is matched ignoring case and punctuation,
+so `londonfra` finds the `london-fra` project just as well. No renaming, and the count in `src/lib/data.ts` no longer
 matters for that project. The **first** image becomes the cover (unless a
 `work/<slug>-cover.jpg` exists) and the rest fill the gallery. Each frame
 reserves the screenshot's own aspect ratio, so wide desktop captures are shown
