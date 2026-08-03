@@ -58,14 +58,14 @@ const IMAGE_FILE = /\.(avif|webp|jpe?g|png)$/i;
 /** Reserved basenames inside a project folder — never gallery screens. */
 const LOGO_FILE = /^logo\.(avif|webp|jpe?g|png)$/i;
 const SAFE_SLUG = /^[a-z0-9-]+$/;
-/** Used when the intrinsic size can't be read (AVIF/WebP headers aren't parsed). */
+/** Used when the intrinsic size can't be read (AVIF headers aren't parsed). */
 const FALLBACK_RATIO = "16 / 9";
 
 /** `2.png` before `10.png` — plain lexical sort gets this wrong. */
 const numericOrder = new Intl.Collator("en", { numeric: true }).compare;
 
 /**
- * Intrinsic size of a PNG or JPEG, read straight from the header. Lets a
+ * Intrinsic size of a PNG, JPEG or WebP, read straight from the header. Lets a
  * gallery reserve each screenshot's true ratio instead of cropping it into a
  * fixed frame.
  */
@@ -93,6 +93,29 @@ function imageSize(absPath: string): { width: number; height: number } | undefin
           marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc;
         if (isFrame) return { height: buf.readUInt16BE(i + 5), width: buf.readUInt16BE(i + 7) };
         i += 2 + buf.readUInt16BE(i + 2);
+      }
+    }
+
+    // WebP — a RIFF container whose first chunk carries the size, in one of
+    // three layouts: extended (the one exporters emit for anything with
+    // transparency), lossy and lossless.
+    if (
+      read > 30 &&
+      buf.toString("latin1", 0, 4) === "RIFF" &&
+      buf.toString("latin1", 8, 12) === "WEBP"
+    ) {
+      const chunk = buf.toString("latin1", 12, 16);
+      if (chunk === "VP8X") {
+        // 24-bit canvas dimensions, stored minus one.
+        return { width: buf.readUIntLE(24, 3) + 1, height: buf.readUIntLE(27, 3) + 1 };
+      }
+      if (chunk === "VP8 " && buf[23] === 0x9d && buf[24] === 0x01 && buf[25] === 0x2a) {
+        return { width: buf.readUInt16LE(26) & 0x3fff, height: buf.readUInt16LE(28) & 0x3fff };
+      }
+      if (chunk === "VP8L" && buf[20] === 0x2f) {
+        // 14 bits each, packed little-endian and stored minus one.
+        const bits = buf.readUInt32LE(21);
+        return { width: (bits & 0x3fff) + 1, height: ((bits >>> 14) & 0x3fff) + 1 };
       }
     }
   } catch {
@@ -165,8 +188,8 @@ function readProjectFolder(slug: string): { logo?: ProjectLogo; shots: ProjectSh
     .map((name) => toShot(`/projects/${dirName}/${name}`));
 
   const logoName = names.find((name) => LOGO_FILE.test(name));
-  // A logo whose size can't be read (only PNG and JPEG headers are parsed) is
-  // dropped — drawn at the wrong ratio it would look worse than none at all.
+  // A logo whose size can't be read (AVIF headers aren't parsed) is dropped —
+  // drawn at the wrong ratio it would look worse than none at all.
   const size = logoName ? imageSize(path.join(dir, logoName)) : undefined;
   const logo = logoName && size ? { src: `/projects/${dirName}/${logoName}`, ...size } : undefined;
 
